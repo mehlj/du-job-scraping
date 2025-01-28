@@ -40,9 +40,9 @@ jobs:
       with:
         command: up
         stack-name: infrastructure
+        dir: ./infrastructure
       env:
         PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-      working-directory: ./infrastructure
             
     
 
