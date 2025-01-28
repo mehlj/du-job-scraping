@@ -185,6 +185,7 @@ func getSecret(secretName string) string {
 	return secretString
 }
 
+// gets pulumi-dynamic S3 bucket name from AWS Parameter Store
 func getS3BucketName(ctx context.Context, client *ssm.Client) string {
 	parameterName := "/du-job-scraping/s3BucketName"
 
@@ -200,6 +201,7 @@ func getS3BucketName(ctx context.Context, client *ssm.Client) string {
 	return bucketName
 }
 
+// sends HTML email notification of job changes
 func sendEmail(body string) {
 	address := "justenmehl12@gmail.com"
 	password := getSecret("GMAIL_APP_PASSWORD")
