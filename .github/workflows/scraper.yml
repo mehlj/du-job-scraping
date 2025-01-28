@@ -13,7 +13,7 @@ defaults:
 jobs:
 
   deploy:
-    name: Compile go binary
+    name: Build go binary and deploy via Pulumi
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -34,6 +34,7 @@ jobs:
         aws-region: us-east-1
 
     - run: go mod download
+      working-directory: ./infrastructure
 
     - uses: pulumi/actions@v6
       with:
@@ -41,6 +42,7 @@ jobs:
         stack-name: infrastructure
       env:
         PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      working-directory: ./infrastructure
             
     
 
