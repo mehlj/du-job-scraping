@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -235,7 +236,14 @@ func sendEmail(body string) {
 	}
 }
 
-func main() {
+// lambda handler, checks job postings for changes and emails if detected
+func scrape() {
+	// /tmp is only writable in lambda
+	err := os.Chdir("/tmp")
+	if err != nil {
+		log.Fatal("Unable to change directory", err)
+	}
+
 	// parse DU job site for current postings, store in local JSON
 	currentJobs := getJobs()
 	convertJobListToFile(currentJobs)
@@ -286,4 +294,8 @@ func main() {
 			sendEmail(diff)
 		}
 	}
+}
+
+func main() {
+	lambda.Start(scrape)
 }

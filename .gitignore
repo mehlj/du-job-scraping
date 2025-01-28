@@ -24,4 +24,7 @@ go.work.sum
 # env file
 .env
 
+# project-specific files
 jobs.json
+bootstrap
+scraper.zip
