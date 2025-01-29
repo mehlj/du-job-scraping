@@ -121,37 +121,6 @@ func main() {
 			return err
 		}
 
-		// Create an IAM Role for EventBridge
-		eventBridgeRole, err := iam.NewRole(ctx, "eventBridgeLambdaRole", &iam.RoleArgs{
-			AssumeRolePolicy: pulumi.String(`{
-				"Version": "2012-10-17",
-				"Statement": [{
-					"Effect": "Allow",
-					"Principal": { "Service": "events.amazonaws.com" },
-					"Action": "sts:AssumeRole"
-				}]
-			}`),
-		})
-		if err != nil {
-			return err
-		}
-
-		// attach a policy to allow EventBridge to invoke the Lambda function
-		_, err = iam.NewRolePolicy(ctx, "eventBridgeInvokePolicy", &iam.RolePolicyArgs{
-			Role: eventBridgeRole.Name,
-			Policy: pulumi.Sprintf(`{
-				"Version": "2012-10-17",
-				"Statement": [{
-					"Effect": "Allow",
-					"Action": "lambda:InvokeFunction",
-					"Resource": "%s"
-				}]
-			}`, function.Arn),
-		})
-		if err != nil {
-			return err
-		}
-
 		// add Lambda as a target for the EventBridge rule, using the IAM role
 		_, err = cloudwatch.NewEventTarget(ctx, "nightlyLambdaTarget", &cloudwatch.EventTargetArgs{
 			Rule: eventRule.Name,
