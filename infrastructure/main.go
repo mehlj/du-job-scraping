@@ -154,9 +154,8 @@ func main() {
 
 		// add Lambda as a target for the EventBridge rule, using the IAM role
 		_, err = cloudwatch.NewEventTarget(ctx, "nightlyLambdaTarget", &cloudwatch.EventTargetArgs{
-			Rule:    eventRule.Name,
-			Arn:     function.Arn,
-			RoleArn: eventBridgeRole.Arn,
+			Rule: eventRule.Name,
+			Arn:  function.Arn,
 		})
 		if err != nil {
 			return err
