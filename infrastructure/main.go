@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/cloudwatch"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/ssm"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/lambda"
@@ -108,6 +109,55 @@ func main() {
 			args,
 			pulumi.DependsOn([]pulumi.Resource{lambdaPolicy}),
 		)
+		if err != nil {
+			return err
+		}
+
+		// create an EventBridge Rule for nightly execution (UTC time)
+		eventRule, err := cloudwatch.NewEventRule(ctx, "nightlyLambdaTrigger", &cloudwatch.EventRuleArgs{
+			ScheduleExpression: pulumi.String("cron(0 4 * * ? *)"), // 4 AM UTC daily (11pm EST)
+		})
+		if err != nil {
+			return err
+		}
+
+		// Create an IAM Role for EventBridge
+		eventBridgeRole, err := iam.NewRole(ctx, "eventBridgeLambdaRole", &iam.RoleArgs{
+			AssumeRolePolicy: pulumi.String(`{
+				"Version": "2012-10-17",
+				"Statement": [{
+					"Effect": "Allow",
+					"Principal": { "Service": "events.amazonaws.com" },
+					"Action": "sts:AssumeRole"
+				}]
+			}`),
+		})
+		if err != nil {
+			return err
+		}
+
+		// attach a policy to allow EventBridge to invoke the Lambda function
+		_, err = iam.NewRolePolicy(ctx, "eventBridgeInvokePolicy", &iam.RolePolicyArgs{
+			Role: eventBridgeRole.Name,
+			Policy: pulumi.Sprintf(`{
+				"Version": "2012-10-17",
+				"Statement": [{
+					"Effect": "Allow",
+					"Action": "lambda:InvokeFunction",
+					"Resource": "%s"
+				}]
+			}`, function.Arn),
+		})
+		if err != nil {
+			return err
+		}
+
+		// add Lambda as a target for the EventBridge rule, using the IAM role
+		_, err = cloudwatch.NewEventTarget(ctx, "nightlyLambdaTarget", &cloudwatch.EventTargetArgs{
+			Rule:    eventRule.Name,
+			Arn:     function.Arn,
+			RoleArn: eventBridgeRole.Arn,
+		})
 		if err != nil {
 			return err
 		}
