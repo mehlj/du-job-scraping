@@ -130,6 +130,18 @@ func main() {
 			return err
 		}
 
+		// allow lambda to be executed from the eventbridge rule
+		_, err = lambda.NewPermission(ctx, "allowEventBridge", &lambda.PermissionArgs{
+			StatementId: pulumi.String("AllowExecutionFromEventBridge"),
+			Action:      pulumi.String("lambda:InvokeFunction"),
+			Function:    function.Name,
+			Principal:   pulumi.String("events.amazonaws.com"),
+			SourceArn:   eventRule.Arn,
+		})
+		if err != nil {
+			return err
+		}
+
 		// export the lambda ARN
 		ctx.Export("lambda", function.Arn)
 
